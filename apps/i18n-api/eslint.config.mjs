@@ -1,2 +1,6 @@
-// 后端使用根目录的 eslint 配置
-export { default } from '../../eslint.config.mjs';
+import baseConfig from '../../eslint.config.mjs';
+
+export default [
+  { ignores: ['prisma.config.ts'] },
+  ...baseConfig,
+];

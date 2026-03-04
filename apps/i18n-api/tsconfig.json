@@ -2,8 +2,8 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "CommonJS",
+    "moduleResolution": "Node",
     "lib": ["ES2022"],
-    "moduleResolution": "node",
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
@@ -20,14 +20,12 @@
     "noUncheckedIndexedAccess": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": false,
+    "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"],
-  "references": [
-    { "path": "../../packages/shared" }
-  ]
+  "exclude": ["node_modules", "dist"]
 }

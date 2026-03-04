@@ -533,6 +533,12 @@ app.useGlobalPipes(
 - 返回 `true` → 允许访问
 - 返回 `false` 或抛出异常 → 拒绝访问
 
+### 核心概念
+
+- CanActivate 是 守卫（Guard）的接口。用来判断请求是否继续执行
+- ExecutionContext 当前请求上下文（request，response，handler当前方法，class当前控制器，当前运行平台）
+- Reflector - 读取装饰器元数据（你用 @SetMetadata() 定义的元数据）
+
 ## 7.2 使用场景
 
 ### 场景 1：JWT 认证守卫

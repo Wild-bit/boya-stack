@@ -2,21 +2,192 @@
 // 数据库模型定义
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider     = "postgresql"
+  relationMode = "prisma"
+  schemas      = ["i18n_project_schema"]
 }
 
-// 示例：用户模型
+// ============================================
+// 枚举定义
+// ============================================
+
+// 团队成员角色
+enum TeamRole {
+  ADMIN // 管理员：可管理成员、生成邀请链接
+  EDITOR // 编辑者：可编辑内容
+  VIEWER // 查看者：只读
+
+  @@schema("i18n_project_schema")
+}
+
+// 邀请链接状态
+enum InviteStatus {
+  ACTIVE // 有效
+  USED // 已使用
+  EXPIRED // 已过期
+  REVOKED // 已撤销
+
+  @@schema("i18n_project_schema")
+}
+
+// ============================================
+// 用户表
+// ============================================
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
+  id       String @id @default(uuid())
+  email    String @unique
+  name     String
+  password String @map("password")
+
+  // 飞书
+  feishuId String? @unique @map("feishu_id")
+
+  // 个人资料
+  avatar String?
+  bio    String?
+
+  // 账户状态
+  isActive    Boolean   @default(true) @map("is_active")
+  lastLoginAt DateTime? @map("last_login_at")
+
+  // 关联
+  refreshTokens RefreshToken[]
+  teamMembers   TeamMember[]
+  ownedTeams    Team[]         @relation("TeamOwner")
+  inviteLinks   InviteLink[]   @relation("InviteCreator")
+
+  // 时间戳
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("users")
+  @@schema("i18n_project_schema")
+}
+
+// ============================================
+// 团队表
+// ============================================
+model Team {
+  id   String @id @default(uuid())
+  name String
+  slug String @unique // URL 友好的团队标识
+
+  // 团队所有者（创建者）
+  ownerId String @map("owner_id")
+  owner   User   @relation("TeamOwner", fields: [ownerId], references: [id])
+
+  // 团队设置（预留）
+  logo        String?
+  description String?
+
+  // 关联
+  members     TeamMember[]
+  inviteLinks InviteLink[]
+
+  // 时间戳
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([ownerId])
+  @@map("teams")
+  @@schema("i18n_project_schema")
+}
+
+// ============================================
+// 团队成员表（用户-团队 多对多 + 角色）
+// ============================================
+model TeamMember {
+  id String @id @default(uuid())
+
+  // 关联
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teamId String @map("team_id")
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  // 角色
+  role TeamRole @default(VIEWER)
+
+  // 通过邀请链接加入
+  inviteLinkId String?     @map("invite_link_id")
+  inviteLink   InviteLink? @relation(fields: [inviteLinkId], references: [id])
+
+  // 加入时间
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  // 唯一约束：一个用户在一个团队只能有一个成员记录
+  @@unique([userId, teamId])
+  @@index([teamId])
+  @@index([inviteLinkId])
+  @@map("team_members")
+  @@schema("i18n_project_schema")
+}
+
+// ============================================
+// 邀请链接表
+// ============================================
+model InviteLink {
+  id String @id @default(uuid())
+
+  // 关联团队
+  teamId String @map("team_id")
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  // 创建者
+  creatorId String @map("creator_id")
+  creator   User   @relation("InviteCreator", fields: [creatorId], references: [id])
+
+  // 邀请链接 token（用于 URL）
+  token String @unique
+
+  // 分配的角色
+  role TeamRole @default(VIEWER)
+
+  // 状态与限制
+  status    InviteStatus @default(ACTIVE)
+  expiresAt DateTime     @map("expires_at")
+  maxUses   Int?         @map("max_uses") // 最大使用次数，null 表示无限制
+  useCount  Int          @default(0) @map("use_count") // 已使用次数
+
+  // 通过此链接加入的成员
+  members TeamMember[]
+
+  // 时间戳
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([token])
+  @@index([teamId])
+  @@index([creatorId])
+  @@map("invite_links")
+  @@schema("i18n_project_schema")
+}
+
+// ============================================
+// Refresh Token 表（JWT 双 token 管理）
+// ============================================
+model RefreshToken {
+  id     String @id @default(uuid())
+  token  String @unique
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Token 信息
+  expiresAt DateTime @map("expires_at")
+  isRevoked Boolean  @default(false) @map("is_revoked") // 是否已撤销
+
+  // 设备信息（多设备管理）
+  userAgent String? @map("user_agent")
+  ipAddress String? @map("ip_address")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
+  @@schema("i18n_project_schema")
 }

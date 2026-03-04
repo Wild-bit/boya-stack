@@ -33,3 +33,8 @@ export const TIME = {
 
 // API 路径前缀
 export const API_PREFIX = '/api';
+
+export const ERROR_CODE = {
+  INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
+  UNAUTHORIZED: 'UNAUTHORIZED',
+} as const;

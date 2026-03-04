@@ -42,3 +42,4 @@ coverage/
 # Prisma
 apps/i18n-api/prisma/*.db
 apps/i18n-api/prisma/*.db-journal
+apps/i18n-api/src/generated/

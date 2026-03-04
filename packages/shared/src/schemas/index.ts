@@ -24,6 +24,7 @@ export const errorCodeSchema = z.enum([
   'NOT_FOUND',
   'CONFLICT',
   'INTERNAL_ERROR',
+  'INVALID_CREDENTIALS',
 ]);
 
 export type ErrorCode = z.infer<typeof errorCodeSchema>;

@@ -1,6 +1,6 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
-import type { ApiErrorResponse } from '@packages/shared';
+import type { ApiErrorResponse } from '../types/api.types';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {

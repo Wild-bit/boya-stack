@@ -1,19 +1,26 @@
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
-import { API_PREFIX } from '@packages/shared';
+import type { AppConfig } from './config/env';
+import cookie from '@fastify/cookie';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter({ logger: true })
   );
+  await app.register(cookie);
 
-  // 全局前缀
-  app.setGlobalPrefix(API_PREFIX);
+  const configService = app.get(ConfigService);
+  const appConfig = configService.get<AppConfig>('app')!;
+
+  app.setGlobalPrefix(appConfig.apiPrefix);
+  app.getHttpAdapter().getInstance().decorateRequest('user', null);
 
   // 全局管道：参数校验
   app.useGlobalPipes(
@@ -21,6 +28,7 @@ async function bootstrap() {
       whitelist: true,
       transform: true,
       forbidNonWhitelisted: true,
+      stopAtFirstError: true,
     })
   );
 
@@ -32,13 +40,23 @@ async function bootstrap() {
 
   // CORS
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: appConfig.corsOrigin,
     credentials: true,
   });
 
-  const port = process.env.PORT || 4000;
-  await app.listen(port, '0.0.0.0');
-  console.log(`🚀 Server is running on: http://localhost:${port}${API_PREFIX}`);
+  // Swagger 配置
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('i18n API')
+    .setDescription('国际化管理平台 API 文档')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('docs', app, document);
+
+  await app.listen(appConfig.port, '0.0.0.0');
+  console.log(`Server running on: http://localhost:${appConfig.port}${appConfig.apiPrefix}`);
+  console.log(`Swagger docs: http://localhost:${appConfig.port}/docs`);
 }
 
 bootstrap();

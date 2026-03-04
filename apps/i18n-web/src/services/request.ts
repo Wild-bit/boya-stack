@@ -4,7 +4,9 @@
  */
 
 import type { ApiResponse, ApiErrorResponse } from '@packages/shared';
+import { ERROR_CODE } from '@packages/shared';
 import { env } from '@/config';
+import { message } from 'antd';
 
 // 请求配置
 interface RequestConfig extends RequestInit {
@@ -51,8 +53,14 @@ class HttpClient {
   }
 
   // 构建完整 URL（含查询参数）
-  private buildUrl(endpoint: string, params?: Record<string, string | number | boolean | undefined>): string {
-    const url = new URL(endpoint, this.baseUrl || window.location.origin);
+  private buildUrl(
+    endpoint: string,
+    params?: Record<string, string | number | boolean | undefined>
+  ): string {
+    if (!this.baseUrl) throw new Error('baseUrl is required');
+
+    console.log('url:', this.baseUrl + endpoint);
+    const url = new URL(this.baseUrl + endpoint);
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined) {
@@ -112,16 +120,16 @@ class HttpClient {
       return data as ApiResponse<T>;
     } catch (error) {
       clearTimeout(timeoutId);
+      console.log('error:', error);
 
       if (error instanceof HttpError) {
-        throw error;
+        message.error(error.message || '请求失败');
+      } else if (error instanceof DOMException && error.name === 'AbortError') {
+        message.error('请求超时');
+      } else {
+        message.error('网络错误');
       }
-
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        throw new HttpError('请求超时', 408, 'TIMEOUT');
-      }
-
-      throw new HttpError('网络错误', 0, 'NETWORK_ERROR');
+      throw error;
     }
   }
 
@@ -172,14 +180,50 @@ export class HttpError extends Error {
   }
 }
 
+// Token 存储 key
+const TOKEN_KEY = 'access_token';
+
+// 获取 Token
+export function getToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+// 设置 Token
+export function setToken(token: string): void {
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+// 移除 Token
+export function removeToken(): void {
+  localStorage.removeItem(TOKEN_KEY);
+}
+
 // 导出默认实例（使用环境变量配置的 API 地址）
 export const httpClient = new HttpClient(env.apiBaseUrl);
 
-// 添加默认拦截器：处理 401 未授权
+// 请求拦截器：自动添加 Token
+httpClient.addRequestInterceptor((config) => {
+  const token = getToken();
+  if (token) {
+    config.headers = {
+      ...config.headers,
+      Authorization: `Bearer ${token}`,
+    };
+  }
+  return config;
+});
+
+// 响应拦截器：处理 401 未授权
 httpClient.addResponseInterceptor(async (response) => {
   if (response.status === 401) {
-    // 可以在这里处理登出逻辑
-    console.warn('用户未授权，请重新登录');
+    removeToken();
+    console.warn('用户未授权，请重新登录', response);
+    const data = await response.json();
+    if (data.code === ERROR_CODE.UNAUTHORIZED) {
+      window.location.replace('/login');
+    } else {
+      throw new HttpError(data.message || '请求失败', response.status, data.code, data.errors);
+    }
   }
   return response;
 });

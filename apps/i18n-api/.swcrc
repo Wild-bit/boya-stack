@@ -16,8 +16,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "module": {
-    "type": "commonjs"
-  },
+  "module": { "type": "commonjs" },
   "exclude": ["node_modules"]
 }

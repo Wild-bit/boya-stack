@@ -13,7 +13,7 @@ function getEnv(key: keyof ImportMetaEnv, defaultValue?: string): string {
 
 export const env = {
   // API 配置
-  apiBaseUrl: getEnv('VITE_API_BASE_URL', '/api/v1'),
+  apiBaseUrl: getEnv('VITE_API_BASE_URL'),
 
   // 应用配置
   appTitle: getEnv('VITE_APP_TITLE', 'I18n Platform'),

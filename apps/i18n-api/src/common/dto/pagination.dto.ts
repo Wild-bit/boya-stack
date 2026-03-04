@@ -1,6 +1,6 @@
 import { IsInt, IsOptional, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
-import { PAGINATION_DEFAULTS } from '@packages/shared';
+import { PAGINATION_DEFAULTS } from '../constants';
 
 export class PaginationDto {
   @IsOptional()

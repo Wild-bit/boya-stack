@@ -154,7 +154,7 @@ apps/i18n-api/src/
 
 ### 2. 登录 & 成员体系
 
-- Google OAuth 登录 （✅ 必做）
+- 飞书 登录 （✅ 必做）
 - 邀请成员（通过 email）（✅ 必做）
 - 登录后自动绑定邀请（✅ 必做）
 - 成员角色（Admin / Editor / Viewer）（✅ 必做）
@@ -191,7 +191,7 @@ apps/i18n-api/src/
 ## 🔧 开发规范
 
 1. **TypeScript**：全项目必须使用 TypeScript，开启 `strict` 模式
-2. **代码分层**：严格遵守前后端分离，共享代码放在 `packages/shared`
+2. **代码分层**：严格遵守前后端分离，前端的共享代码放在 `packages/shared`
 3. **数据请求**：前端使用 SWR + fetch wrapper，禁止使用 axios
 4. **状态管理**：Zustand 仅用于真正的全局状态
 5. **表单处理**：必须使用 React Hook Form + Zod

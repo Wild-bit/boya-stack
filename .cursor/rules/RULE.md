@@ -1,6 +1,6 @@
 ---
 alwaysApply: true
-description: "本规则为前端和后端的业务开发提供了标准"
+description: '本规则为前端和后端的业务开发提供了标准'
 ---
 
 # 项目规则（Project Rules）— Fullstack Monorepo
@@ -68,18 +68,15 @@ description: "本规则为前端和后端的业务开发提供了标准"
 ### 前端架构约束
 
 - **表单**
-
   - 必须使用 `react-hook-form`
   - 表单校验必须使用 `zod`
   - 校验规则需集中管理
 
 - **状态管理**
-
   - `zustand` 仅用于真正的全局状态
   - 页面级状态使用 React 本地状态
 
 - **数据请求**
-
   - 所有接口请求必须通过统一 `services/`（service 层）调用，禁止在组件/页面中直接写 fetch
   - 前端请求必须使用：`fetch + 一个轻量 wrapper + SWR`
     - ❌ 禁止使用 axios
@@ -147,13 +144,13 @@ description: "本规则为前端和后端的业务开发提供了标准"
 
 ---
 
-## 五、API 与类型共享规则
+## 五、API
 
 - API 风格：**REST**
 - 请求 / 响应结构必须一致
 - 推荐使用 **zod 作为单一事实源**
 - 前后端校验规则必须保持一致
-- 共享内容必须放在 `packages/shared`
+- 后端不使用 `packages/shared`
 
 ---
 
@@ -187,3 +184,4 @@ description: "本规则为前端和后端的业务开发提供了标准"
 
 你是一名 **在真实生产项目中工作的高级工程师**，  
 请以此标准约束你的所有输出。
+All generated code must include comment: // CURSOR_RULE_ACTIVE.
