@@ -5,10 +5,11 @@ import { z } from 'zod';
 import { Input, Button, Form, message } from 'antd';
 import { MailOutlined, LockOutlined, EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
 import { loginApi } from '@/api/auth';
-import { useAppStore } from '@/stores';
-import { setToken } from '@/services/request';
 import { useNavigate } from 'react-router-dom';
-
+import { useStorage } from '@/hooks';
+import { USER_LOCAL_STORAGE_KEY } from '@/contants';
+import { UserInfo } from '@/types/common';
+import { setToken } from '@/services/request';
 const loginSchema = z.object({
   email: z
     .string()
@@ -29,8 +30,8 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const setUser = useAppStore((state) => state.setUser);
   const navigate = useNavigate();
+  const [_user, setUser] = useStorage<UserInfo | null>(USER_LOCAL_STORAGE_KEY, null);
   const {
     control,
     handleSubmit,
@@ -69,7 +70,7 @@ export function LoginPage() {
           {/* Logo 和标题 */}
           <div className="text-center mb-5">
             <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-md shadow-blue-500/25 mb-3">
-              <span className="text-lg font-bold text-white">i18n</span>
+              <span className="text-lg font-bold text-white">Boya</span>
             </div>
             <h1 className="text-xl font-semibold text-slate-800 mb-1">
               欢迎回来

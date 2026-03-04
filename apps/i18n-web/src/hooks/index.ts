@@ -3,3 +3,4 @@
  */
 
 export { useFetch, usePaginatedFetch } from './useFetch';
+export { useStorage } from './userLocalStorage';

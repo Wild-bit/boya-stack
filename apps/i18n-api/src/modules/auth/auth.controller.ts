@@ -4,6 +4,7 @@ import { AuthService } from './auth.service';
 import { EmailDto, PasswordDto } from '@/common/dto/common.dto';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { PublicRoute } from '@/common/decorators/publicRoute.decorator';
+import { ERROR_CODE } from '@/common/constants/error';
 
 export class LoginFormDataDto extends IntersectionType(EmailDto, PasswordDto) {}
 
@@ -42,17 +43,29 @@ export class AuthController {
     console.log('parsed cookies:', req.cookies);
     const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {
-      throw new UnauthorizedException('未提供认证令牌');
+      throw new UnauthorizedException({
+        message: '未提供刷新令牌',
+        code: ERROR_CODE.REFRESH_TOKEN_NOT_FOUND,
+      });
     }
     const token = await this.authService.getRefreshToken(refreshToken);
     if (!token) {
-      throw new UnauthorizedException('认证令牌无效');
+      throw new UnauthorizedException({
+        message: '刷新令牌无效',
+        code: ERROR_CODE.REFRESH_TOKEN_INVALID,
+      });
     }
     if (token.expiresAt < new Date()) {
-      throw new UnauthorizedException('认证令牌已过期');
+      throw new UnauthorizedException({
+        message: '刷新令牌已过期',
+        code: ERROR_CODE.REFRESH_TOKEN_EXPIRED,
+      });
     }
     if (token.isRevoked) {
-      throw new UnauthorizedException('认证令牌已撤销');
+      throw new UnauthorizedException({
+        message: '刷新令牌已撤销',
+        code: ERROR_CODE.REFRESH_TOKEN_REVOKED,
+      });
     }
     const accessToken = await this.authService.generateAccessToken(token.user);
     return {

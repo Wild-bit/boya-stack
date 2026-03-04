@@ -7,6 +7,7 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import type { FastifyRequest } from 'fastify';
 import { IS_PUBLIC_KEY } from '@/common/decorators/publicRoute.decorator';
+import { ERROR_CODE } from '../constants/error';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -26,17 +27,28 @@ export class JwtAuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<FastifyRequest>();
     const token = this.extractToken(request);
     if (!token) {
-      throw new UnauthorizedException('未提供认证令牌');
+      throw new UnauthorizedException({
+        message: '未提供认证令牌',
+        code: ERROR_CODE.TOKEN_NOT_FOUND,
+      });
     }
 
     try {
+      console.info('token:', token);
       const payload = await this.jwtService.verifyAsync(token);
       request.user = payload;
     } catch (error) {
       if (error instanceof Error && error.name === 'TokenExpiredError') {
-        throw new UnauthorizedException('认证令牌已过期');
+        throw new UnauthorizedException({
+          message: '认证令牌已过期',
+          code: ERROR_CODE.TOKEN_EXPIRED,
+        });
       }
-      throw new UnauthorizedException('认证令牌无效');
+      console.info('error:', error);
+      throw new UnauthorizedException({
+        message: '认证令牌无效',
+        code: ERROR_CODE.TOKEN_INVALID,
+      });
     }
     return true;
   }

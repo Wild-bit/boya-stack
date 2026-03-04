@@ -7,11 +7,13 @@ import type { ApiResponse, ApiErrorResponse } from '@packages/shared';
 import { ERROR_CODE } from '@packages/shared';
 import { env } from '@/config';
 import { message } from 'antd';
+import { TOKEN_LOCAL_STORAGE_KEY } from '@/contants';
 
 // 请求配置
 interface RequestConfig extends RequestInit {
   timeout?: number;
   params?: Record<string, string | number | boolean | undefined>;
+  _retry?: boolean; // 标记是否为重试请求，避免无限循环
 }
 
 // 请求拦截器
@@ -19,6 +21,77 @@ type RequestInterceptor = (config: RequestConfig) => RequestConfig | Promise<Req
 
 // 响应拦截器
 type ResponseInterceptor = (response: Response) => Response | Promise<Response>;
+
+// 自定义 HTTP 错误类
+export class HttpError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public code?: string,
+    public errors?: Record<string, string[]>
+  ) {
+    super(message);
+    this.name = 'HttpError';
+  }
+}
+
+// Token 存储 key
+const TOKEN_KEY = TOKEN_LOCAL_STORAGE_KEY;
+
+// 获取 Token
+export function getToken(): string | null {
+  console.info('getToken:', localStorage.getItem(TOKEN_KEY));
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+// 设置 Token
+export function setToken(token: string): void {
+  console.info('setToken:', token);
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+// 移除 Token
+export function removeToken(): void {
+  localStorage.removeItem(TOKEN_KEY);
+}
+
+// Token 刷新状态管理
+let isRefreshing = false;
+let pendingRequests: Array<{
+  resolve: (token: string) => void;
+  reject: (error: Error) => void;
+}> = [];
+
+// 执行所有等待中的请求
+function onRefreshed(newToken: string) {
+  pendingRequests.forEach(({ resolve }) => resolve(newToken));
+  pendingRequests = [];
+}
+
+// 通知所有等待的请求刷新失败
+function onRefreshFailed(error: Error) {
+  pendingRequests.forEach(({ reject }) => reject(error));
+  pendingRequests = [];
+}
+
+// 刷新 access token
+async function refreshAccessToken(): Promise<string> {
+  const response = await fetch(`${env.apiBaseUrl}/auth/refresh-token`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new HttpError(data.message || '刷新令牌失败', response.status, data.code, data.errors);
+  }
+
+  return data.data.accessToken;
+}
 
 class HttpClient {
   private baseUrl: string;
@@ -73,7 +146,7 @@ class HttpClient {
 
   // 核心请求方法
   async request<T>(endpoint: string, config: RequestConfig = {}): Promise<ApiResponse<T>> {
-    const { timeout = 30000, params, ...fetchConfig } = config;
+    const { timeout = 30000, params, _retry = false, ...fetchConfig } = config;
 
     // 执行请求拦截器
     let finalConfig: RequestConfig = {
@@ -93,19 +166,75 @@ class HttpClient {
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     try {
-      let response = await fetch(this.buildUrl(endpoint, params), {
+      const response = await fetch(this.buildUrl(endpoint, params), {
         ...finalConfig,
         signal: controller.signal,
+        credentials: 'include',
       });
 
       clearTimeout(timeoutId);
 
-      // 执行响应拦截器
-      for (const interceptor of this.responseInterceptors) {
-        response = await interceptor(response);
+      // 克隆响应以便多次读取
+      const responseClone = response.clone();
+      const data = await response.json();
+
+      // 处理 401 未授权
+      if (response.status === 401) {
+        const errorData = data as ApiErrorResponse;
+
+        // refresh_token 相关错误 或 token 无效/未提供，需要重新登录
+        if (
+          errorData.code === ERROR_CODE.REFRESH_TOKEN_EXPIRED ||
+          errorData.code === ERROR_CODE.REFRESH_TOKEN_INVALID ||
+          errorData.code === ERROR_CODE.REFRESH_TOKEN_REVOKED ||
+          errorData.code === ERROR_CODE.REFRESH_TOKEN_NOT_FOUND ||
+          errorData.code === ERROR_CODE.TOKEN_NOT_FOUND ||
+          errorData.code === ERROR_CODE.TOKEN_INVALID
+        ) {
+          removeToken();
+          window.location.replace('/login');
+          throw new HttpError(
+            errorData.message || '请重新登录',
+            response.status,
+            errorData.code,
+            errorData.errors
+          );
+        }
+
+        // access_token 过期，尝试刷新（且不是重试请求）
+        if (errorData.code === ERROR_CODE.TOKEN_EXPIRED && !_retry) {
+          try {
+            const newToken = await this.handleTokenRefresh();
+            setToken(newToken);
+            // 使用新 token 重新发送请求
+            return this.request<T>(endpoint, {
+              ...config,
+              _retry: true,
+              headers: {
+                ...config.headers,
+                Authorization: `Bearer ${newToken}`,
+              },
+            });
+          } catch (refreshError) {
+            removeToken();
+            window.location.replace('/login');
+            throw refreshError;
+          }
+        }
+
+        // 其他 401 错误
+        throw new HttpError(
+          errorData.message || '请求失败',
+          response.status,
+          errorData.code,
+          errorData.errors
+        );
       }
 
-      const data = await response.json();
+      // 执行响应拦截器（针对成功响应）
+      for (const interceptor of this.responseInterceptors) {
+        await interceptor(responseClone);
+      }
 
       if (!response.ok) {
         const errorResponse = data as ApiErrorResponse;
@@ -130,6 +259,29 @@ class HttpClient {
         message.error('网络错误');
       }
       throw error;
+    }
+  }
+
+  // 处理 token 刷新（确保多个请求只刷新一次）
+  private async handleTokenRefresh(): Promise<string> {
+    if (isRefreshing) {
+      // 已有刷新请求在进行中，加入等待队列
+      return new Promise<string>((resolve, reject) => {
+        pendingRequests.push({ resolve, reject });
+      });
+    }
+
+    isRefreshing = true;
+
+    try {
+      const newToken = await refreshAccessToken();
+      onRefreshed(newToken);
+      return newToken;
+    } catch (error) {
+      onRefreshFailed(error instanceof Error ? error : new Error('刷新令牌失败'));
+      throw error;
+    } finally {
+      isRefreshing = false;
     }
   }
 
@@ -167,43 +319,13 @@ class HttpClient {
   }
 }
 
-// 自定义 HTTP 错误类
-export class HttpError extends Error {
-  constructor(
-    message: string,
-    public status: number,
-    public code?: string,
-    public errors?: Record<string, string[]>
-  ) {
-    super(message);
-    this.name = 'HttpError';
-  }
-}
-
-// Token 存储 key
-const TOKEN_KEY = 'access_token';
-
-// 获取 Token
-export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
-}
-
-// 设置 Token
-export function setToken(token: string): void {
-  localStorage.setItem(TOKEN_KEY, token);
-}
-
-// 移除 Token
-export function removeToken(): void {
-  localStorage.removeItem(TOKEN_KEY);
-}
-
 // 导出默认实例（使用环境变量配置的 API 地址）
 export const httpClient = new HttpClient(env.apiBaseUrl);
 
 // 请求拦截器：自动添加 Token
 httpClient.addRequestInterceptor((config) => {
   const token = getToken();
+  console.info('token:', token);
   if (token) {
     config.headers = {
       ...config.headers,
@@ -211,21 +333,6 @@ httpClient.addRequestInterceptor((config) => {
     };
   }
   return config;
-});
-
-// 响应拦截器：处理 401 未授权
-httpClient.addResponseInterceptor(async (response) => {
-  if (response.status === 401) {
-    removeToken();
-    console.warn('用户未授权，请重新登录', response);
-    const data = await response.json();
-    if (data.code === ERROR_CODE.UNAUTHORIZED) {
-      window.location.replace('/login');
-    } else {
-      throw new HttpError(data.message || '请求失败', response.status, data.code, data.errors);
-    }
-  }
-  return response;
 });
 
 export default httpClient;
