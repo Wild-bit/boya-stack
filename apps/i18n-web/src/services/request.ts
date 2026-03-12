@@ -3,7 +3,7 @@
  * 基于 fetch 的轻量级 HTTP 客户端
  */
 
-import type { ApiResponse, ApiErrorResponse, User } from '@packages/shared';
+import type { ApiResponse, ApiErrorResponse } from '@packages/shared';
 import { ERROR_CODE } from '@packages/shared';
 import { env } from '@/config';
 import { message } from 'antd';
