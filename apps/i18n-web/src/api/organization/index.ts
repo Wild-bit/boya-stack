@@ -6,6 +6,7 @@ import {
   ProjectInfo,
   TeamInfo,
   TeamListResponse,
+  TeamMemberInfo,
 } from './types';
 import { PaginatedResponse, PaginationParams } from '@packages/shared';
 
@@ -51,4 +52,22 @@ export const getProjectListApi = (params: PaginationParams & { teamSlug: string 
 
 export const createProjectApi = (data: CreateProjectRequest) => {
   return httpClient.post<ProjectInfo>('/projects/create', data);
+};
+
+export const getTeamMembersApi = (teamId: string) => {
+  return httpClient.get<TeamMemberInfo[]>(`/team-members/list`, {
+    params: {
+      teamId,
+    },
+  });
+};
+
+export const updateMemberRoleApi = (id: string, role: string) => {
+  return httpClient.patch('/team-members/role', { id, role });
+};
+
+export const removeMemberApi = (id: string) => {
+  return httpClient.delete('/team-members/remove', {
+    body: JSON.stringify({ id }),
+  });
 };

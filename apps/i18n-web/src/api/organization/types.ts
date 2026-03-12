@@ -48,3 +48,17 @@ export interface EditTeamRequest {
   name?: string;
   slug?: string;
 }
+
+export interface TeamMemberInfo {
+  id: string;
+  userId: string;
+  role: string;
+  joinedAt: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+    lastLoginAt?: string;
+  };
+}

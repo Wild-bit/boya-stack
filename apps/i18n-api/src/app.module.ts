@@ -10,6 +10,7 @@ import { appConfig, databaseConfig } from './config/env';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { UploadModule } from './modules/upload/upload.modules';
+import { TeamMemberModule } from './modules/team-member/team-member.modules';
 
 const nodeEnv = process.env['NODE_ENV'] || 'development';
 
@@ -27,6 +28,7 @@ const nodeEnv = process.env['NODE_ENV'] || 'development';
     JwtSecretGeneratedModule,
     ProjectsModule,
     UploadModule,
+    TeamMemberModule,
   ],
   providers: [
     {

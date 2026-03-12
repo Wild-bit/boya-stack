@@ -1,25 +1,171 @@
-import { useState } from 'react';
-import { Button, Input, Menu, message, Modal } from 'antd';
+import { useEffect, useState } from 'react';
+import { Button, Dropdown, Input, Menu, message, Modal, Skeleton, Space, Table, Tag } from 'antd';
 import type { MenuProps } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import { SettingOutlined, TeamOutlined } from '@ant-design/icons';
 import { useAppStore } from '@/stores';
-import { editTeamInfoApi } from '@/api/organization/index';
+import { editTeamInfoApi, getTeamMembersApi, updateMemberRoleApi, removeMemberApi } from '@/api/organization/index';
+import type { TeamMemberInfo } from '@/api/organization/types';
+import { UserAvatar } from '@/components/UserAvatar';
 
 type TabKey = 'general' | 'members';
 
 const menuItems: MenuProps['items'] = [
   { key: 'general', label: '通用', icon: <SettingOutlined /> },
-  { key: 'members', label: '成员', icon: <TeamOutlined /> },
+  { key: 'members', label: '团队成员', icon: <TeamOutlined /> },
 ];
 
 export function SettingsPage() {
-  const { currentTeam, updateCurrentTeam } = useAppStore();
+  const { currentTeam, updateCurrentTeam, user: currentUser } = useAppStore();
+  const isOwner = currentTeam?.ownerId === currentUser?.id;
+  const currentMemberRole = () => {
+    const me = members.find((m) => m.user.id === currentUser?.id);
+    return me?.role;
+  };
 
   const [activeTab, setActiveTab] = useState<TabKey>('general');
   const [teamName, setTeamName] = useState(currentTeam?.name || '');
   const [teamUrlSlug, setTeamUrlSlug] = useState(currentTeam?.slug || '');
   const [savingName, setSavingName] = useState(false);
   const [savingSlug, setSavingSlug] = useState(false);
+  const [members, setMembers] = useState<TeamMemberInfo[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
+
+  const fetchMembers = () => {
+    if (!currentTeam?.id) return;
+    setLoadingMembers(true);
+    getTeamMembersApi(currentTeam.id)
+      .then((res) => setMembers(res.data))
+      .catch(() => message.error('获取成员列表失败'))
+      .finally(() => setLoadingMembers(false));
+  };
+
+  const handleChangeRole = async (memberId: string, role: string) => {
+    try {
+      await updateMemberRoleApi(memberId, role);
+      message.success('角色已更新');
+      fetchMembers();
+    } catch {
+      message.error('修改角色失败');
+    }
+  };
+
+  const handleRemoveMember = (member: TeamMemberInfo) => {
+    Modal.confirm({
+      title: '确认移除成员',
+      content: `确定要将 ${member.user.name} 从团队中移除吗？`,
+      okText: '移除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          await removeMemberApi(member.id);
+          message.success('成员已移除');
+          fetchMembers();
+        } catch {
+          message.error('移除失败');
+        }
+      },
+    });
+  };
+
+  // 判断当前用户能否操作目标成员
+  const canOperate = (target: TeamMemberInfo) => {
+    if (target.user.id === currentUser?.id) return false; // 不能操作自己
+    if (target.user.id === currentTeam?.ownerId) return false; // 不能操作 Owner
+    if (isOwner) return true; // Owner 可以操作所有人
+    if (currentMemberRole() === 'ADMIN' && target.role !== 'ADMIN') return true; // Admin 可以操作非 Admin
+    return false;
+  };
+
+  useEffect(() => {
+    if (activeTab === 'members') {
+      fetchMembers();
+    }
+  }, [activeTab, currentTeam?.id]);
+
+  const roleColorMap: Record<string, string> = {
+    ADMIN: 'red',
+    EDITOR: 'blue',
+    VIEWER: 'default',
+  };
+
+  const roleLabelMap: Record<string, string> = {
+    ADMIN: '管理员',
+    EDITOR: '编辑者',
+    VIEWER: '查看者',
+  };
+
+  const memberColumns: ColumnsType<TeamMemberInfo> = [
+    {
+      title: '头像',
+      dataIndex: ['user', 'avatar'],
+      render: (value: string) => {
+        return <UserAvatar avatar={value} />
+      }
+    },
+    {
+      title: '成员',
+      dataIndex: ['user', 'name'],
+    },
+    {
+      title: '邮箱',
+      dataIndex: ['user', 'email'],
+    },
+    {
+      title: '角色',
+      dataIndex: 'role',
+      key: 'role',
+      render: (role: string, record: TeamMemberInfo) => {
+        const isRecordOwner = record.user.id === currentTeam?.ownerId;
+        if (isRecordOwner) {
+          return <Tag color="gold">所有者</Tag>;
+        }
+        return <Tag color={roleColorMap[role] || 'default'}>{roleLabelMap[role] || role}</Tag>;
+      },
+    },
+    {
+      title: '注册时间',
+      dataIndex: 'joinedAt'
+    },
+    {
+      title: '最后登录时间',
+      dataIndex: ['user', 'lastLoginAt']
+    },
+    {
+      title: '操作',
+      render: (_: unknown, record: TeamMemberInfo) => {
+        const disabled = !canOperate(record);
+
+        const roleOptions = [
+          { key: 'ADMIN', label: '管理员' },
+          { key: 'EDITOR', label: '编辑者' },
+          { key: 'VIEWER', label: '查看者' },
+        ].filter((item) => {
+          if (item.key === record.role) return false;
+          if (item.key === 'ADMIN' && !isOwner) return false;
+          return true;
+        });
+
+        return (
+          <Space>
+            <Dropdown
+              disabled={disabled}
+              menu={{
+                items: roleOptions,
+                onClick: ({ key }) => handleChangeRole(record.id, key),
+              }}
+            >
+              <Button size="small" disabled={disabled}>修改角色</Button>
+            </Dropdown>
+            <Button size="small" danger disabled={disabled} onClick={() => handleRemoveMember(record)}>
+              移除
+            </Button>
+          </Space>
+        );
+      },
+    }
+  ];
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
     setActiveTab(key as TabKey);
@@ -167,10 +313,22 @@ export function SettingsPage() {
         )}
 
         {activeTab === 'members' && (
-          <div className="border border-slate-200 rounded-lg p-6">
-            <h2 className="text-xl font-bold text-slate-900 mb-2">团队成员</h2>
-            <p className="text-sm text-slate-500">管理团队成员及其权限</p>
-            {/* TODO: members list */}
+          <div className="border border-slate-200 rounded-lg overflow-hidden">
+            <div className="p-6">
+              <h2 className="text-xl font-bold text-slate-900 mb-2">团队成员</h2>
+              <p className="text-sm text-slate-500 mb-4">管理团队成员及其权限</p>
+              {loadingMembers ? (
+                <Skeleton active paragraph={{ rows: 3 }} />
+              ) : (
+                <Table
+                  columns={memberColumns}
+                  dataSource={members}
+                  rowKey="id"
+                  pagination={false}
+                  size="middle"
+                />
+              )}
+            </div>
           </div>
         )}
       </div>
