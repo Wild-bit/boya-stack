@@ -1,27 +1,29 @@
+import { useAppStore } from '@/stores';
+import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Layout } from 'antd';
-import { useStorage } from '@/hooks';
-import { USER_LOCAL_STORAGE_KEY } from '@/contants';
-import type { UserInfo } from '@/types/common';
-
-const { Header, Content, Footer } = Layout;
+import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { AccountAvatar } from '@/components/AccountAvatar';
 
 export function MainLayout() {
-  const [user] = useStorage<UserInfo | null>(USER_LOCAL_STORAGE_KEY, null);
+  const { teams, fetchTeams } = useAppStore();
+
+  useEffect(() => {
+    if (!teams.length) fetchTeams();
+  }, [teams.length]);
 
   return (
-    <Layout className="min-h-screen">
-      <Header className="flex items-center">
-        <div className="text-white text-xl font-bold">{user?.name}</div>
-      </Header>
-      <Content className="p-6 bg-gray-50">
-        <div className="bg-white rounded-lg p-6 min-h-[calc(100vh-180px)]">
-          <Outlet />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-slate-100">
+      <header className="bg-white flex sticky top-0 z-10 border-b border-slate-200/80">
+        <div className="max-w-[1400px] mx-auto container h-20 flex items-center justify-between px-4">
+          <Breadcrumbs />
+          <div className="flex-1 flex justify-end">
+            <AccountAvatar />
+          </div>
         </div>
-      </Content>
-      <Footer className="text-center text-gray-500">
-        粤ICP备2025426049号
-      </Footer>
-    </Layout>
+      </header>
+      <main className="flex-1 mt-5">
+        <Outlet />
+      </main>
+    </div>
   );
 }

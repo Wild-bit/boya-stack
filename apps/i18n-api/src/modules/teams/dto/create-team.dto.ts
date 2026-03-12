@@ -7,6 +7,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsOptional, MaxLength, Matches } from 'class-validator';
 
 export class CreateTeamDto {
+  @ApiProperty({ description: '团队所有者 ID', example: '123' })
+  @IsString()
+  @IsNotEmpty({ message: '团队所有者 ID 不能为空' })
+  ownerId: string;
   @ApiProperty({ description: '团队名称', example: 'My Awesome Team' })
   @IsString()
   @IsNotEmpty({ message: '团队名称不能为空' })
@@ -35,4 +39,11 @@ export class CreateTeamDto {
   @IsOptional()
   @IsString()
   logo?: string;
+}
+
+export class DeleteTeamDto {
+  @ApiProperty({ description: '团队 ID', example: '123' })
+  @IsString()
+  @IsNotEmpty({ message: '团队 ID 不能为空' })
+  id: string;
 }

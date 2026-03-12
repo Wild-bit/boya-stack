@@ -5,6 +5,10 @@ export const appConfig = registerAs('app', () => ({
   apiPrefix: process.env['API_PREFIX'] || '/api',
   corsOrigin: process.env['CORS_ORIGIN'] || 'http://localhost:3000',
   nodeEnv: process.env['NODE_ENV'] || 'development',
+  feishuClientId: process.env['FEISHU_CLIENT_ID'] || '',
+  feishuClientSecret: process.env['FEISHU_CLIENT_SECRET'] || '',
+  feishuGrantType: process.env['FEISHU_GRANT_TYPE'] || '',
+  feishuRedirectUri: process.env['FEISHU_REDIRECT_URI'] || '',
 }));
 
 export const databaseConfig = registerAs('database', () => ({

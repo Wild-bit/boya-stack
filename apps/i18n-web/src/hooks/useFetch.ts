@@ -4,6 +4,7 @@
 
 import useSWR, { SWRConfiguration } from 'swr';
 import { httpClient, HttpError } from '@/services/request';
+import { PaginationParams } from '@packages/shared';
 
 // SWR 默认配置
 const defaultSwrConfig: SWRConfiguration = {
@@ -32,18 +33,16 @@ export function useFetch<T>(url: string | null, config?: SWRConfiguration<T, Htt
 /**
  * 带分页的数据请求 Hook
  */
-export function usePaginatedFetch<T>(
+export function usePaginatedFetch<T, Q extends PaginationParams>(
   url: string | null,
-  params?: { page?: number; pageSize?: number },
+  params?: Q,
   config?: SWRConfiguration<T, HttpError>
 ) {
-  const queryString = params
-    ? `?${new URLSearchParams(
-        Object.entries(params)
-          .filter(([, v]) => v !== undefined)
-          .map(([k, v]) => [k, String(v)])
-      ).toString()}`
-    : '';
+  const queryString = `?${new URLSearchParams(
+    Object.entries(params ?? {})
+      .filter(([, v]) => v !== undefined)
+      .map(([k, v]) => [k, String(v)])
+  ).toString()}`;
 
   return useFetch<T>(url ? `${url}${queryString}` : null, config);
 }

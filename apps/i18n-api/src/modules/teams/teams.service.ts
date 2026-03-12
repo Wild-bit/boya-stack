@@ -1,6 +1,7 @@
 // CURSOR_RULE_ACTIVE
 import { Injectable, ConflictException } from '@nestjs/common';
 import slugify from 'slugify';
+import { nanoid } from 'nanoid';
 
 import { PrismaService } from '@/prisma/prisma.service';
 import { CreateTeamDto, UpdateTeamDto, FindTeamsDto } from './dto';
@@ -8,7 +9,6 @@ import { toPaginationOptions, toPaginatedResult } from '@/common/utils/paginatio
 import type { PaginatedResult } from '@/common/types/pagination.types';
 import type { Team } from '@/generated/prisma/client';
 import { TeamRole } from '@/generated/prisma/client';
-import { generateUUID } from '@/utils/uuid';
 
 @Injectable()
 export class TeamsService {
@@ -19,7 +19,7 @@ export class TeamsService {
    * @param dto 创建团队参数
    * @param ownerId 团队所有者 ID（从 JWT 获取）
    */
-  async createTeam(dto: CreateTeamDto, ownerId: string): Promise<Team> {
+  async createTeam(dto: CreateTeamDto): Promise<Team> {
     // 生成 slug（如果未提供）
     const slug = dto.slug || this.generateSlug(dto.name);
 
@@ -38,14 +38,14 @@ export class TeamsService {
           slug,
           description: dto.description,
           logo: dto.logo,
-          ownerId,
+          ownerId: dto.ownerId,
         },
       });
 
       // 2. 将创建者添加为团队成员（ADMIN 角色）
       await tx.teamMember.create({
         data: {
-          userId: ownerId,
+          userId: dto.ownerId,
           teamId: team.id,
           role: TeamRole.ADMIN,
         },
@@ -80,31 +80,37 @@ export class TeamsService {
    */
   private generateSlug(name: string): string {
     const baseSlug = slugify(name, { lower: true, strict: true });
-    const uniqueSuffix = generateUUID().slice(0, 8);
+    const uniqueSuffix = nanoid(8);
     return `${baseSlug}-${uniqueSuffix}`;
   }
 
-  // 分页查询团队
-  async findAll(dto: FindTeamsDto): Promise<PaginatedResult<Team>> {
+  /**
+   * 分页查询用户加入的团队
+   * @param dto 查询参数
+   * @param userId 当前用户 ID（只返回该用户加入的团队）
+   */
+  async findAll(dto: FindTeamsDto, userId: string): Promise<PaginatedResult<Team>> {
     const options = toPaginationOptions(dto);
-    const { keyword, ownerId } = dto;
+    const { keyword } = dto;
 
-    // 构建查询条件
+    // 构建查询条件：只查询用户加入的团队（通过 TeamMember 关联）
     const where = {
+      members: {
+        some: { userId },
+      },
       ...(keyword && {
         OR: [
           { name: { contains: keyword, mode: 'insensitive' as const } },
           { slug: { contains: keyword, mode: 'insensitive' as const } },
         ],
       }),
-      ...(ownerId && { ownerId }),
     };
 
     // 并行查询数据和总数
     const [items, total] = await Promise.all([
       this.prisma.team.findMany({
         where,
-        skip: options.skip, // 跳过前面多少条记录（用于分页） 在数据库SQL相当于 limit 10 offset 10
+        skip: options.skip,
         take: options.take,
         orderBy: { createdAt: 'desc' },
       }),
@@ -115,9 +121,46 @@ export class TeamsService {
   }
 
   // 根据 ID 查找团队
-  async findById(id: string) {
+  async findBySlug(slug: string) {
     return this.prisma.team.findUnique({
-      where: { id },
+      where: { slug },
+    });
+  }
+
+  async deleteTeam(id: string) {
+    return this.prisma.$transaction(async (tx) => {
+      // 找到所有项目
+      const projects = await tx.project.findMany({
+        where: { teamId: id },
+        select: { id: true },
+      });
+      const projectIds = projects.map((p) => p.id);
+
+      // 删除项目成员
+      await tx.projectMember.deleteMany({
+        where: {
+          projectId: { in: projectIds },
+        },
+      });
+      // 删除项目
+      await tx.project.deleteMany({
+        where: { teamId: id },
+      });
+
+      // 删除邀请链接
+      // await tx.inviteLink.deleteMany({
+      //   where: { teamId: id },
+      // });
+
+      // 删除团队成员
+      await tx.teamMember.deleteMany({
+        where: { teamId: id },
+      });
+
+      // 最后删除团队
+      await tx.team.delete({
+        where: { id },
+      });
     });
   }
 }

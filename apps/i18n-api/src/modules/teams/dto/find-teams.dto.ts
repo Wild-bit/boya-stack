@@ -10,8 +10,4 @@ export class FindTeamsDto extends PaginationDto {
   @IsOptional()
   @IsString()
   keyword?: string;
-
-  @IsOptional()
-  @IsString()
-  ownerId?: string;
 }

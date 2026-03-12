@@ -2,6 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 补充 preflight 禁用后缺失的基础样式（与 Ant Design 兼容） */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  border-style: solid;
+  border-width: 0;
+  border-color: theme('colors.gray.200');
+}
+
+/* 图片防溢出（不设置 display:block 以兼容 Ant Design） */
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 表格边框合并 */
+table {
+  border-collapse: collapse;
+}
+
 /* 全局样式 */
 html,
 body {
@@ -13,4 +35,8 @@ body {
 
 #root {
   min-height: 100vh;
+}
+
+.btn-primary {
+  @apply bg-gradient-to-br from-blue-500 to-indigo-600 text-white px-4 py-2 rounded-md;
 }

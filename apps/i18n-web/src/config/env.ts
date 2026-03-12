@@ -16,7 +16,7 @@ export const env = {
   apiBaseUrl: getEnv('VITE_API_BASE_URL'),
 
   // 应用配置
-  appTitle: getEnv('VITE_APP_TITLE', 'I18n Platform'),
+  appTitle: getEnv('VITE_APP_TITLE', 'Boya'),
   appEnv: getEnv('VITE_APP_ENV', 'development') as 'development' | 'production' | 'staging',
 
   // 功能开关

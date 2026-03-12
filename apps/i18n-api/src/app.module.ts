@@ -5,9 +5,11 @@ import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.modules';
 import { TeamsModule } from './modules/teams/teams.modules';
 import { JwtSecretGeneratedModule } from './modules/jwt-secret-generated/jwt-secret-generated.modules';
+import { ProjectsModule } from './modules/projects/projects.modules';
 import { appConfig, databaseConfig } from './config/env';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { UploadModule } from './modules/upload/upload.modules';
 
 const nodeEnv = process.env['NODE_ENV'] || 'development';
 
@@ -23,6 +25,8 @@ const nodeEnv = process.env['NODE_ENV'] || 'development';
     AuthModule,
     TeamsModule,
     JwtSecretGeneratedModule,
+    ProjectsModule,
+    UploadModule,
   ],
   providers: [
     {

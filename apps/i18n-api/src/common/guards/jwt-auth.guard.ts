@@ -34,8 +34,8 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     try {
-      console.info('token:', token);
       const payload = await this.jwtService.verifyAsync(token);
+      console.log('payload:', payload);
       request.user = payload;
     } catch (error) {
       if (error instanceof Error && error.name === 'TokenExpiredError') {

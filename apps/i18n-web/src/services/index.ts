@@ -3,3 +3,4 @@
  */
 
 export { httpClient, HttpError } from './request';
+export { uploadFile } from './upload';

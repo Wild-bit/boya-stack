@@ -3,11 +3,12 @@
  * 基于 fetch 的轻量级 HTTP 客户端
  */
 
-import type { ApiResponse, ApiErrorResponse } from '@packages/shared';
+import type { ApiResponse, ApiErrorResponse, User } from '@packages/shared';
 import { ERROR_CODE } from '@packages/shared';
 import { env } from '@/config';
 import { message } from 'antd';
-import { TOKEN_LOCAL_STORAGE_KEY } from '@/contants';
+import { TOKEN_LOCAL_STORAGE_KEY, USER_LOCAL_STORAGE_KEY } from '@/contants';
+import { UserInfo } from '@/types/common';
 
 // 请求配置
 interface RequestConfig extends RequestInit {
@@ -40,14 +41,28 @@ const TOKEN_KEY = TOKEN_LOCAL_STORAGE_KEY;
 
 // 获取 Token
 export function getToken(): string | null {
-  console.info('getToken:', localStorage.getItem(TOKEN_KEY));
   return localStorage.getItem(TOKEN_KEY);
 }
 
 // 设置 Token
 export function setToken(token: string): void {
-  console.info('setToken:', token);
   localStorage.setItem(TOKEN_KEY, token);
+}
+
+// 获取用户
+export function getUser(): UserInfo | null {
+  const user = localStorage.getItem(USER_LOCAL_STORAGE_KEY);
+  return user ? JSON.parse(user) : null;
+}
+
+// 设置用户
+export function setUser(user: UserInfo): void {
+  localStorage.setItem(USER_LOCAL_STORAGE_KEY, JSON.stringify(user));
+}
+
+// 移除用户
+export function removeUser(): void {
+  localStorage.removeItem(USER_LOCAL_STORAGE_KEY);
 }
 
 // 移除 Token
@@ -79,13 +94,9 @@ async function refreshAccessToken(): Promise<string> {
   const response = await fetch(`${env.apiBaseUrl}/auth/refresh-token`, {
     method: 'POST',
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
   });
 
   const data = await response.json();
-
   if (!response.ok) {
     throw new HttpError(data.message || '刷新令牌失败', response.status, data.code, data.errors);
   }
@@ -132,8 +143,8 @@ class HttpClient {
   ): string {
     if (!this.baseUrl) throw new Error('baseUrl is required');
 
-    console.log('url:', this.baseUrl + endpoint);
     const url = new URL(this.baseUrl + endpoint);
+
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined) {
@@ -164,7 +175,6 @@ class HttpClient {
     // 创建 AbortController 用于超时控制
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
-
     try {
       const response = await fetch(this.buildUrl(endpoint, params), {
         ...finalConfig,
@@ -192,6 +202,7 @@ class HttpClient {
           errorData.code === ERROR_CODE.TOKEN_INVALID
         ) {
           removeToken();
+          removeUser();
           window.location.replace('/login');
           throw new HttpError(
             errorData.message || '请重新登录',
@@ -217,6 +228,7 @@ class HttpClient {
             });
           } catch (refreshError) {
             removeToken();
+            removeUser();
             window.location.replace('/login');
             throw refreshError;
           }
@@ -325,7 +337,6 @@ export const httpClient = new HttpClient(env.apiBaseUrl);
 // 请求拦截器：自动添加 Token
 httpClient.addRequestInterceptor((config) => {
   const token = getToken();
-  console.info('token:', token);
   if (token) {
     config.headers = {
       ...config.headers,

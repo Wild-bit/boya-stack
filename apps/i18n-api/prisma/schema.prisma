@@ -35,14 +35,24 @@ enum InviteStatus {
   @@schema("i18n_project_schema")
 }
 
+// 项目成员角色
+enum ProjectRole {
+  ADMIN // 项目管理员：可管理项目设置和成员
+  EDITOR // 编辑者：可编辑翻译内容
+  VIEWER // 查看者：只读
+
+  @@schema("i18n_project_schema")
+}
+
 // ============================================
 // 用户表
 // ============================================
 model User {
-  id       String @id @default(uuid())
-  email    String @unique
+  id       String  @id @default(uuid())
+  email    String? @unique
   name     String
-  password String @map("password")
+  phone    String? @unique
+  password String  @map("password")
 
   // 飞书
   feishuId String? @unique @map("feishu_id")
@@ -56,10 +66,11 @@ model User {
   lastLoginAt DateTime? @map("last_login_at")
 
   // 关联
-  refreshTokens RefreshToken[]
-  teamMembers   TeamMember[]
-  ownedTeams    Team[]         @relation("TeamOwner")
-  inviteLinks   InviteLink[]   @relation("InviteCreator")
+  refreshTokens  RefreshToken[]
+  teamMembers    TeamMember[]
+  projectMembers ProjectMember[]
+  ownedTeams     Team[]          @relation("TeamOwner")
+  inviteLinks    InviteLink[]    @relation("InviteCreator")
 
   // 时间戳
   createdAt DateTime @default(now()) @map("created_at")
@@ -87,6 +98,7 @@ model Team {
 
   // 关联
   members     TeamMember[]
+  projects    Project[]
   inviteLinks InviteLink[]
 
   // 时间戳
@@ -125,6 +137,105 @@ model TeamMember {
   @@index([teamId])
   @@index([inviteLinkId])
   @@map("team_members")
+  @@schema("i18n_project_schema")
+}
+
+// ============================================
+// 项目表
+// ============================================
+model Project {
+  id   String @id @default(uuid())
+  name String
+  slug String // URL 友好的项目标识
+
+  // 所属团队
+  teamId String @map("team_id")
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  // 项目设置
+  description     String?
+  sourceLocale    String   @default("zh-CN") @map("source_locale") // 源语言
+  targetLanguages String[] @default(["en", "zh-CN"]) @map("target_languages") // 目标语言
+
+  // 关联
+  members ProjectMember[]
+  keys    I18nKey[]
+
+  // 时间戳
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([teamId, slug])
+  @@index([teamId])
+  @@map("projects")
+  @@schema("i18n_project_schema")
+}
+
+// ============================================
+// 项目成员表（用户-项目 多对多 + 角色）
+// ============================================
+model ProjectMember {
+  id String @id @default(uuid())
+
+  // 关联
+  userId    String  @map("user_id")
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String  @map("project_id")
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // 角色
+  role ProjectRole @default(VIEWER)
+
+  // 加入时间
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  // 唯一约束：一个用户在一个项目只能有一个成员记录
+  @@unique([userId, projectId])
+  @@index([projectId])
+  @@map("project_members")
+  @@schema("i18n_project_schema")
+}
+
+// ============================================
+// I18n Key 表
+// ============================================
+model I18nKey {
+  id          String  @id @default(uuid())
+  projectId   String  @map("project_id")
+  namespace   String
+  key         String
+  description String?
+  sourceText  String
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  i18Ntranslations I18nTranslation[]
+
+  @@unique([projectId, namespace, key])
+  @@index([projectId])
+  @@map("i18n_keys")
+  @@schema("i18n_project_schema")
+}
+
+// ============================================
+// I18n Translation 表
+// ============================================
+model I18nTranslation {
+  id    String @id @default(uuid())
+  keyId String @map("key_id")
+  text  String
+  lang  String
+
+  key I18nKey @relation(fields: [keyId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([keyId, lang])
+  @@index([keyId])
+  @@map("i18n_translations")
   @@schema("i18n_project_schema")
 }
 

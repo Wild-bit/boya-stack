@@ -1,8 +1,9 @@
-import { Body, Controller, Get, NotFoundException, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, NotFoundException, Param, Post, Req } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { LoginFormDataDto } from '../auth/auth.controller';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { formatToUTC8Time } from '@/utils/date';
+import { FastifyRequest } from 'fastify';
 @ApiTags('用户')
 @Controller('users')
 export class UsersController {
@@ -39,5 +40,15 @@ export class UsersController {
   @ApiOperation({ summary: '创建用户' })
   createUser(@Body() body: LoginFormDataDto) {
     return this.usersService.create(body);
+  }
+
+  @Post('edit')
+  @ApiOperation({ summary: '编辑用户信息' })
+  editUserInfo(
+    @Body() body: { name?: string; avatar?: string; bio?: string; phone?: string },
+    @Req() req: FastifyRequest
+  ) {
+    const userId = req.user?.sub as string;
+    return this.usersService.editUserInfo(userId, body);
   }
 }

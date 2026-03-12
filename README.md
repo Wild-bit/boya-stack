@@ -154,11 +154,11 @@ apps/i18n-api/src/
 
 ### 2. 登录 & 成员体系
 
-- 飞书 登录 （✅ 必做）
+- 飞书 登录 （✅ 必做 已完成）
 - 邀请成员（通过 email）（✅ 必做）
 - 登录后自动绑定邀请（✅ 必做）
-- 成员角色（Admin / Editor / Viewer）（✅ 必做）
-- JWT 会话管理 双 token（Access + Refresh 双 token）实现（✅ 必做）
+- 成员角色（Admin / Editor / Viewer）（✅ 必做 已完成）
+- JWT 会话管理 双 token（Access + Refresh 双 token）实现（✅ 必做 已完成）
 
 ```js
 1. 登录 → 发 access + refresh

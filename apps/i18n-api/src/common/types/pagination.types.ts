@@ -12,6 +12,11 @@ export interface PaginatedResult<T> {
   totalPages: number;
 }
 
+export interface PaginationQuery {
+  page: number;
+  pageSize: number;
+}
+
 // 分页查询参数（用于 service 层）
 export interface PaginationOptions {
   page: number;

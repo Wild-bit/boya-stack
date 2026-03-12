@@ -5,6 +5,7 @@ export interface UserInfo {
   feishuId?: string;
   avatar?: string;
   bio?: string;
+  phone?: string;
   isActive?: boolean;
   lastLoginAt: string;
   createdAt: string;

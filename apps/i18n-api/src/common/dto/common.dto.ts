@@ -4,17 +4,21 @@
  */
 
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, Matches, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString, Matches, MinLength } from 'class-validator';
 
 export class EmailDto {
   @ApiProperty({ description: '邮箱地址', example: 'user@example.com' })
+  @IsOptional()
   @IsString()
   @IsEmail({}, { message: '邮箱格式不正确' })
   email: string;
 }
 
 export class PasswordDto {
-  @ApiProperty({ description: '密码（至少8位，包含字母、数字和特殊字符）', example: 'Password@123' })
+  @ApiProperty({
+    description: '密码（至少8位，包含字母、数字和特殊字符）',
+    example: 'Password@123',
+  })
   @IsString()
   @IsNotEmpty({ message: '密码不能为空' })
   @MinLength(8, { message: '密码至少8位' })

@@ -7,6 +7,10 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, MaxLength, Matches } from 'class-validator';
 
 export class UpdateTeamDto {
+  @ApiPropertyOptional({ description: '团队ID' })
+  @IsString()
+  id: string;
+
   @ApiPropertyOptional({ description: '团队名称', example: 'My Awesome Team' })
   @IsOptional()
   @IsString()
