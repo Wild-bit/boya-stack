@@ -7,9 +7,8 @@ generator client {
 }
 
 datasource db {
-  provider     = "postgresql"
-  relationMode = "prisma"
-  schemas      = ["i18n_project_schema"]
+  provider = "postgresql"
+  schemas  = ["i18n_project_schema"]
 }
 
 // ============================================
