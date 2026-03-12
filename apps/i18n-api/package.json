@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "nest start --watch",
-    "build": "nest build",
+    "build": "NODE_ENV=production nest build",
     "start": "nest start",
     "start:prod": "node dist/main.js",
     "lint": "eslint src --ext .ts",
@@ -15,7 +15,11 @@
     "db:push": "NODE_ENV=development prisma db push",
     "db:reset": "NODE_ENV=development prisma migrate reset",
     "db:studio": "NODE_ENV=development prisma studio",
-    "db:migrate:prod": "NODE_ENV=production prisma migrate deploy"
+    "db:generate:prod": "NODE_ENV=production prisma generate",
+    "db:migrate:prod": "NODE_ENV=production prisma migrate deploy",
+    "db:push:prod": "NODE_ENV=production prisma db push",
+    "db:reset:prod": "NODE_ENV=production prisma migrate reset",
+    "db:studio:prod": "NODE_ENV=production prisma studio"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",
