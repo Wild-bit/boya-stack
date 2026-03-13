@@ -38,6 +38,7 @@ jobs:
               pnpm install --frozen-lockfile
             fi
             pnpm --filter i18n-api db:generate:prod
+            pnpm --filter i18n-api db:reset:prod -- --force
             pnpm --filter i18n-api db:migrate:prod
             pnpm --filter i18n-api build
             pm2 restart i18n-api
