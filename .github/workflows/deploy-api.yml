@@ -38,7 +38,7 @@ jobs:
               pnpm install --frozen-lockfile
             fi
             pnpm --filter i18n-api db:generate:prod
-            pnpm --filter i18n-api db:reset:prod -- --force
+            cd apps/i18n-api && NODE_ENV=production pnpm exec prisma migrate reset --force && cd ../..
             pnpm --filter i18n-api db:migrate:prod
             pnpm --filter i18n-api build
             pm2 restart i18n-api
