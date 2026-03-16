@@ -47,4 +47,4 @@ apps/i18n-api/src/generated/
 
 .cursor/
 .claude/
-apps/docs/*.md
+docs/*.md
