@@ -4,7 +4,6 @@ import { DownloadOutlined, FileTextOutlined, CheckCircleFilled } from '@ant-desi
 import { useAppStore } from '@/stores';
 import { getLocaleLabel } from '@/contants';
 import { exportJsonZipApi } from '@/api/export';
-import { useParams } from 'react-router-dom';
 
 type FileFormat = 'json';
 
