@@ -4,7 +4,7 @@ import { LoginPage } from "../modules/login/pages/LoginPage";
 import { ErrorPage } from "../modules/error/pages/ErrorPage";
 import { TeamDetailPage } from "@/modules/teams/pages/TeamDetailPage";
 import { TeamSwitcher } from "../components/TeamSwitcher";
-import { getProjectBySlugApi, getTeamBySlugApi, getTeamListApi, getMyRoleApi } from "@/api/organization";
+import { getProjectBySlugApi, getTeamBySlugApi, getTeamListApi } from "@/api/organization";
 import { CURRENT_TEAM_SLUG_LOCAL_STORAGE_KEY } from "@/contants";
 import { useAppStore } from "@/stores";
 import Lottie from "lottie-react";
