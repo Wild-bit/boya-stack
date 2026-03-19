@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#f472b6"/>
+    </linearGradient>
+  </defs>
+  <!-- 渐变外圈 -->
+  <circle cx="64" cy="64" r="64" fill="url(#grad)"/>
+  <!-- 深色内圈 -->
+  <circle cx="64" cy="64" r="58" fill="#0f0f1a"/>
+  <!-- 代码符号 &lt;/&gt; -->
+  <text x="64" y="82" text-anchor="middle" font-family="Inter, -apple-system, sans-serif" font-size="52" font-weight="800" fill="url(#grad)">&lt;/&gt;</text>
+</svg>

@@ -8,7 +8,7 @@ export default function ContactSection() {
       </span>
       <h2 className="text-[2rem] font-bold tracking-[-1px] mt-4">联系我</h2>
       <p className="text-white/50 mb-10 max-w-[480px] mx-auto mt-4">
-        如果你有合作意向、技术交流或者只是想打个招呼，欢迎随时联系我。
+        如果你有合作意向、技术交流，欢迎随时联系我。
       </p>
 
       <div className="flex justify-center gap-4 flex-wrap">

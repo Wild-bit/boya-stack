@@ -1,4 +1,4 @@
-import { stats } from '@/data/content';
+import GitHubContributions from './GitHubContributions';
 
 export default function HeroSection() {
   return (
@@ -15,11 +15,11 @@ export default function HeroSection() {
       </span>
 
       <h1 className="text-[3.5rem] sm:text-[2.2rem] md:text-[3.5rem] font-extrabold tracking-[-2px] leading-[1.1] mb-6">
-        Hi, 我是 <span className="text-gradient">Lance</span>
+        Hi, 我是 <span className="text-gradient">Lance</span> &nbsp;<span className="animate-wave" role="img" aria-labelledby="wave">👋🏻</span>
       </h1>
 
       <p className="text-[1.1rem] text-white/50 max-w-[520px]">
-        一个热爱技术的全栈开发者，专注于构建美观且高性能的 Web 应用。相信好的代码应该像好的设计一样优雅。
+        一个热爱技术的全栈开发者，专注于构建美观且高性能的 Web 应用。我相信学习某件事的最佳方法就是动手实践。
       </p>
 
       <div className="flex gap-4 mt-10">
@@ -37,14 +37,7 @@ export default function HeroSection() {
         </a>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-6 sm:gap-12 mt-14 px-12 py-6 glass rounded-2xl">
-        {stats.map((s) => (
-          <div key={s.label} className="text-center">
-            <div className="text-[1.8rem] font-bold text-gradient">{s.num}</div>
-            <div className="text-[0.75rem] text-white/50 mt-0.5">{s.label}</div>
-          </div>
-        ))}
-      </div>
+      <GitHubContributions />
     </section>
   );
 }

@@ -1,8 +1,8 @@
 export const navLinks = [
-  { label: '关于', href: '#about' },
+  { label: '关于我', href: '#about' },
   { label: '项目', href: '#projects' },
   { label: '简历', href: '#resume' },
-  { label: '博客', href: '#blog' },
+  { label: '文章', href: '#blog' },
   { label: '联系', href: '#contact' },
 ];
 
