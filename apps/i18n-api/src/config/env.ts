@@ -3,7 +3,7 @@ import { registerAs } from '@nestjs/config';
 export const appConfig = registerAs('app', () => ({
   port: parseInt(process.env['PORT'] || '4000', 10),
   apiPrefix: process.env['API_PREFIX'] || '/api',
-  corsOrigin: process.env['CORS_ORIGIN'] || 'http://localhost:3000',
+  corsOrigin: JSON.parse(process.env['CORS_ORIGIN'] || '["http://localhost:3000"]'),
   nodeEnv: process.env['NODE_ENV'] || 'development',
   feishuClientId: process.env['FEISHU_CLIENT_ID'] || '',
   feishuClientSecret: process.env['FEISHU_CLIENT_SECRET'] || '',
