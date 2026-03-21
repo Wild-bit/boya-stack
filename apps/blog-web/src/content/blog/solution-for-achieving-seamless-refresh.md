@@ -235,7 +235,7 @@ POST /api/auth/sign-in
 后端验证 → 生成 accessToken + refreshToken
        ↓
 accessToken 返回给前端 → 存入 localStorage
-refreshToken 写入 Cookie (httpOnly: false, path: /api/auth/refresh-token)
+refreshToken 写入 Cookie (httpOnly: true, path: /api/auth/refresh-token)
        ↓
 前端跳转到首页
 ```
