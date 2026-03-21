@@ -3,6 +3,9 @@ import rscGuide from '@/content/blog/react-server-components.md?raw';
 import typescriptGuide from '@/content/blog/typescript-advanced-types.md?raw';
 import websocketGuide from '@/content/blog/websocket-architecture.md?raw';
 import nestjsGuide from '@/content/blog/solution-for-achieving-seamless-refresh.md?raw';
+import axiosHttpClientGuide from '@/content/blog/axios-http-client.md?raw';
+import teamInviteDesign from '@/content/blog/team-invite-design.md?raw';
+import i18nKeyTrie from '@/content/blog/i18n-key-trie.md?raw';
 
 export interface BlogPost {
   slug: string;
@@ -15,6 +18,33 @@ export interface BlogPost {
 }
 
 export const blogPosts: BlogPost[] = [
+  {
+    slug: 'i18n-key-trie',
+    date: '2026-03-22',
+    title: 'i18n Key 冲突校验',
+    desc: '分享如何使用 Trie（前缀树） 校验 i18n Key 是否冲突。',
+    content: i18nKeyTrie,
+    tags: ['i18n', 'Trie', '冲突校验'],
+    category: 'NestJS',
+  },
+  {
+    slug: 'team-invite-design',
+    date: '2026-03-15',
+    title: '团队邀请设计',
+    desc: '分享如何设计团队邀请功能。',
+    content: teamInviteDesign,
+    tags: ['团队邀请', 'NestJS'],
+    category: 'NestJS',
+  },
+  {
+    slug: 'axios-http-client',
+    date: '2026-01-02',
+    title: '基于 Axios 封装的 HTTP 客户端',
+    desc: '分享如何使用 Axios 封装 HTTP 客户端。',
+    content: axiosHttpClientGuide,
+    tags: ['Axios', 'HTTP'],
+    category: '基建工程',
+  },
   {
     slug: 'monorepo-setup-guide',
     date: '2025-12-15',
@@ -53,7 +83,7 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: 'solution-for-achieving-seamless-refresh-with-nestjs',
-    date: '2026-03-21',
+    date: '2026-03-15',
     title: 'NestJS 实现无感刷新解决方案',
     desc: '分享如何使用 NestJS 实现无感刷新解决方案。',
     content: nestjsGuide,

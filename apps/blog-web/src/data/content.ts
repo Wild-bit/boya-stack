@@ -128,29 +128,6 @@ export const skills = [
   },
 ];
 
-export const blogPosts = [
-  {
-    date: '2025-12-15',
-    title: '从零搭建企业级 Monorepo 工程体系',
-    desc: '分享如何使用 pnpm + Turborepo 构建高效的 monorepo 开发体验。',
-  },
-  {
-    date: '2025-11-08',
-    title: '深入理解 React Server Components',
-    desc: 'RSC 的工作原理、使用场景以及与传统 SSR 的区别。',
-  },
-  {
-    date: '2025-10-22',
-    title: 'TypeScript 类型体操实战指南',
-    desc: '从基础到进阶，掌握 TypeScript 高级类型编程技巧。',
-  },
-  {
-    date: '2025-09-14',
-    title: 'WebSocket 实时通信架构设计',
-    desc: '如何设计一个可靠的实时通信系统，处理断线重连和消息可靠性。',
-  },
-];
-
 export const contactLinks = [
   { icon: '✉️', text: 'lzh32534@gmail.com', type: 'email' },
   { icon: '🐙', text: 'GitHub', type: 'github', link: 'https://github.com/Wild-bit' },
