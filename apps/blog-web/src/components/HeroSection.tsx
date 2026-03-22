@@ -1,6 +1,11 @@
+import { useEffect, useState } from 'react';
 import GitHubContributions from './GitHubContributions';
 
 export default function HeroSection() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 768);
+  }, []);
   return (
     <section id="about" className="container mx-auto px-6 sm:px-8 lg:px-16 pt-32 pb-20 flex flex-col items-center text-center">
       {/* Avatar */}
@@ -36,8 +41,9 @@ export default function HeroSection() {
           联系我
         </a>
       </div>
-
-      <GitHubContributions />
+      {!isMobile && (
+        <GitHubContributions />
+      )}
     </section>
   );
 }
