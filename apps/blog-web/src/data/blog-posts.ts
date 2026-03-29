@@ -14,6 +14,7 @@ import nextJsConceptsAndPractices from '@/content/blog/next-js-concepts-and-prac
 import guangzhouInterviewPreparation from '@/content/interview-experiences/guangzhou-interview-preparation.md?raw';
 import aiConceptsTranslationIntegration from '@/content/interview-experiences/ai-concepts-translation-integration.md?raw';
 import reactCorePrinciples from '@/content/interview-experiences/react-core-principles.md?raw';
+import reactTsHighFrequencyQuestions from '@/content/interview-experiences/react-ts-high-frequency-questions.md?raw';
 export interface BlogPost {
   slug: string;
   date: string;
@@ -25,6 +26,15 @@ export interface BlogPost {
 }
 
 export const interviewExperiences: BlogPost[] = [
+  {
+    slug: 'react-ts-high-frequency-questions',
+    date: '2026-03-24',
+    title: 'React + TypeScript 高频面试题深度解答',
+    desc: 'React + TypeScript 高频面试题深度解答',
+    content: reactTsHighFrequencyQuestions,
+    tags: ['React', 'TypeScript', '高频面试题', '深度解答'],
+    category: 'React',
+  },
   {
     slug: 'react-core-principles',
     date: '2026-03-24',
